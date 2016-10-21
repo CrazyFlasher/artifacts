@@ -10,6 +10,7 @@
 
     <dirname property="imported.basedir" file="${ant.file.commons}"/>
     <property file="${imported.basedir}/common.properties"/>
+    <property file="${imported.basedir}/server.properties"/>
     <property file="${basedir}/version.properties"/>
 
     <property name="sftp-path-suffix" value=""/>
@@ -22,7 +23,8 @@
     <property name="flexunit" location="${imported.basedir}/../../flexunit"/>
 
     <!--Dependencies-->
-    <property name="libs_path" value="${basedir}/${path}/dependencies"/>
+    <property name="core_path" value="${basedir}/${path}"/>
+    <echo>${basedir}/${path}</echo>
     <property name="internal_libs_path" value="${basedir}/dependencies"/>
 
     <property name="ver.num" value="${build.release.number}.${build.major.number}.${build.minor.number}"/>
@@ -36,7 +38,7 @@
         <delete dir="${doc}"/>
         <asdoc output="${doc}" dir="${FLEX_HOME}" lenient="true" failonerror="true">
             <doc-sources path-element="${src}"/>
-            <external-library-path dir="${libs_path}" includes="**/*.swc"/>
+            <external-library-path dir="${core_path}" includes="**/*.swc"/>
             <external-library-path dir="${internal_libs_path}" includes="*.swc"/>
         </asdoc>
         <zip destfile="${swc}/${swc_name}" update="true">
@@ -52,7 +54,7 @@
         <compc output="${swc}/${swc_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
-            <external-library-path dir="${libs_path}" includes="**/*"/>
+            <external-library-path dir="${core_path}" includes="**/*"/>
             <external-library-path dir="${internal_libs_path}" includes="*.swc"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
@@ -62,7 +64,7 @@
         <compc output="${swc}/${swc_fat_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
-            <include-libraries dir="${libs_path}" includes="**/*"/>
+            <include-libraries dir="${core_path}" includes="**/*"/>
             <include-libraries dir="${internal_libs_path}" includes="*.swc"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
@@ -79,8 +81,7 @@
             <arg value="-swf-version=${swf-version}"/>
             <arg value="-target-player=${target-player}"/>
             <arg value="-library-path+=${internal_libs_path}"/>
-            <arg value="-library-path+=${libs_path}"/>
-            <arg value="-library-path+=${libs_path}/crazyfm"/>
+            <arg value="-library-path+=${core_path}"/>
             <arg value="-output=${swf}/${swf_name}.swf"/>
             <arg value="-frame=two,${main_class}"/>
             <arg value="-keep-as3-metadata+=Autowired"/>
@@ -97,8 +98,7 @@
             <arg value="-swf-version=${swf-version}"/>
             <arg value="-library-path+=${flexunit}"/>
             <arg value="-library-path+=${internal_libs_path}"/>
-            <arg value="-library-path+=${libs_path}"/>
-            <arg value="-library-path+=${libs_path}/crazyfm"/>
+            <arg value="-library-path+=${core_path}"/>
             <!--<arg value="-library-path+=${as3-signals}"/>-->
             <arg value="-output=${out}/tests/TestRunner.swf"/>
             <arg value="-keep-as3-metadata+=Autowired"/>
