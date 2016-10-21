@@ -16,16 +16,20 @@
     <property name="sftp-path-suffix" value=""/>
     <property name="src" value="${basedir}/src"/>
     <property name="out" value="${basedir}/out"/>
+    <property name="deploy.dir" location="${out}"/>
     <property name="doc" value="${out}/doc"/>
     <property name="swc" value="${out}/swc"/>
     <property name="swf" value="${out}/swf"/>
     <property name="path" value="."/>
+    <property name="maven.deploy.repo" value="https://raw.github.com/CrazyFlasher/maven-repo/master"/>
+
     <property name="flexunit" location="${imported.basedir}/../../flexunit"/>
 
     <!--Dependencies-->
     <property name="core_path" value="${basedir}/${path}"/>
-    <echo>${basedir}/${path}</echo>
     <property name="internal_libs_path" value="${basedir}/dependencies"/>
+
+    <echo>${internal_libs_path}</echo>
 
     <property name="ver.num" value="${build.release.number}.${build.major.number}.${build.minor.number}"/>
 	
@@ -50,7 +54,7 @@
         </zip>
         <!--delete dir="${doc}"/-->
     </target>
-    <target name="swc">
+    <target name="swc" depends="prepare">
         <compc output="${swc}/${swc_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
@@ -60,7 +64,7 @@
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
         </compc>
     </target>
-    <target name="fat-swc">
+    <target name="fat-swc" depends="prepare">
         <compc output="${swc}/${swc_fat_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
@@ -164,4 +168,24 @@
              trust="true"/>
         <delete file="${swc}/${ant.project.name}_latest.zip"/>
     </target>
+
+    <!--//////////////////////////////////////////////////////////////////////////////////////-->
+
+    <target name="prepare" depends="-init-ooo">
+        <mavendep pom="pom.xml" pathProp="aslib.path"/>
+        <!--<maventaskdef groupId="com.threerings.ant" artifactId="actionscript" version="1.8"/>-->
+    </target>
+
+    <!-- Set maven.deploy.repo to deploy to a local maven repo:
+        ant -Dmaven.deploy.repo=file:///path/to/local/repo maven-deploy -->
+    <target name="maven-deploy" depends="swc"
+            description="Deploys build artifacts to a Maven repository.">
+        <mavendeploy file="${swc}/${swc_name}" pom="pom.xml"/>
+    </target>
+
+    <target name="maven-install" depends="swc,fat-swc"
+            description="Installs the build artifact to the local Maven repository">
+        <maveninstall file="${swc}/${swc_name}" pom="pom.xml"/>
+    </target>
+
 </project>
