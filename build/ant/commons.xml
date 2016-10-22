@@ -21,7 +21,7 @@
     <property name="swc" value="${out}/swc"/>
     <property name="swf" value="${out}/swf"/>
     <property name="path" value="."/>
-    <property name="maven.deploy.repo" value="https://raw.github.com/CrazyFlasher/maven-repo/master"/>
+    <!--<property name="maven.deploy.repo" value="https://raw.github.com/CrazyFlasher/maven-repo/master"/>-->
 
     <property name="flexunit" location="${imported.basedir}/../../flexunit"/>
 
@@ -54,7 +54,7 @@
         </zip>
         <!--delete dir="${doc}"/-->
     </target>
-    <target name="swc" depends="prepare">
+    <target name="swc">
         <compc output="${swc}/${swc_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
@@ -64,7 +64,7 @@
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
         </compc>
     </target>
-    <target name="fat-swc" depends="prepare">
+    <target name="fat-swc">
         <compc output="${swc}/${swc_fat_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
@@ -172,20 +172,15 @@
     <!--//////////////////////////////////////////////////////////////////////////////////////-->
 
     <target name="prepare" depends="-init-ooo">
-        <mavendep pom="pom.xml" pathProp="aslib.path"/>
-        <!--<maventaskdef groupId="com.threerings.ant" artifactId="actionscript" version="1.8"/>-->
+        <mavendep pom="pom.xml"/>
     </target>
 
     <!-- Set maven.deploy.repo to deploy to a local maven repo:
         ant -Dmaven.deploy.repo=file:///path/to/local/repo maven-deploy -->
-    <target name="maven-deploy" depends="swc"
+    <target name="maven-deploy" depends="prepare,swc"
             description="Deploys build artifacts to a Maven repository.">
         <mavendeploy file="${swc}/${swc_name}" pom="pom.xml"/>
-    </target>
-
-    <target name="maven-install" depends="swc,fat-swc"
-            description="Installs the build artifact to the local Maven repository">
-        <maveninstall file="${swc}/${swc_name}" pom="pom.xml"/>
+        <!--<maveninstall file="${swc}/${swc_name}" pom="pom.xml"/>-->
     </target>
 
 </project>
