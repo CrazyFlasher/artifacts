@@ -18,26 +18,23 @@
     <property name="doc" value="${out}/doc"/>
     <property name="swc" value="${out}/swc"/>
     <property name="swf" value="${out}/swf"/>
-    <property name="path" value="."/>
     <!--<property name="maven.deploy.repo" value="https://raw.github.com/CrazyFlasher/maven-repo/master"/>-->
 
     <property name="flexunit" location="${user.home}/.m2/repository/org/apache/flexunit/${flexunit.version}"/>
 
     <taskdef resource="flexUnitTasks.tasks" classpath="${flexunit}/flexUnitTasks-${flexunit.version}-20140410.jar"/>
 
-    <!--Dependencies-->
-    <property name="core_path" value="${basedir}/${path}"/>
-    <property name="internal_libs_path" value="${basedir}/dependencies"/>
-
     <!--<target name="package_fat_swc" depends="clean,fat-swc,asdoc,test"/>-->
+
+    <!--Dependencies-->
+    <property name="dependencies_path" location="${user.home}/.m2/repository/"/>
 
     <target name="package_swc" depends="clean,prepare-flexunit,swc,asdoc,test,maven-deploy"/>
     <target name="asdoc">
         <delete dir="${doc}"/>
-        <asdoc output="${doc}" dir="${FLEX_HOME}" lenient="true" failonerror="true">
+        <asdoc output="${doc}" dir="${FLEX_HOME}/frameworks" lenient="true" failonerror="true">
             <doc-sources path-element="${src}"/>
-            <external-library-path dir="${core_path}" includes="**/*.swc"/>
-            <external-library-path dir="${internal_libs_path}" includes="*.swc"/>
+            <external-library-path dir="${dependencies_path}" includes="**/*.swc"/>
         </asdoc>
         <zip destfile="${swc}/${swc_name}" update="true">
             <zipfileset dir="${doc}" prefix="docs">
@@ -46,14 +43,13 @@
                 <exclude name="overviews.xml"/>
             </zipfileset>
         </zip>
-        <!--delete dir="${doc}"/-->
+        <delete dir="${doc}"/>
     </target>
     <target name="swc">
         <compc output="${swc}/${swc_name}">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
             <include-sources dir="${src}" includes="*"/>
-            <external-library-path dir="${core_path}" includes="**/*"/>
-            <external-library-path dir="${internal_libs_path}" includes="*.swc"/>
+            <external-library-path dir="${dependencies_path}" includes="**/*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
         </compc>
@@ -62,24 +58,18 @@
         <!--<compc output="${swc}/${swc_fat_name}">-->
             <!--<load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>-->
             <!--<include-sources dir="${src}" includes="*"/>-->
-            <!--<include-libraries dir="${core_path}" includes="**/*"/>-->
-            <!--<include-libraries dir="${internal_libs_path}" includes="*.swc"/>-->
             <!--<external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>-->
             <!--<external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>-->
         <!--</compc>-->
     <!--</target>-->
     <target name="swf">
         <mkdir dir="${swf}"/>
-        <echo>-----------------------------------</echo>
-        <echo>[swf] Building example...</echo>
-        <echo>-----------------------------------</echo>
         <java jar="${FLEX_HOME}/lib/mxmlc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">
             <arg value="${src}/StartUp.as"/>
             <arg value="-source-path+=${src}"/>
             <arg value="-swf-version=${swf-version}"/>
+            <arg value="-library-path+=${dependencies_path}"/>
             <arg value="-target-player=${target-player}"/>
-            <arg value="-library-path+=${internal_libs_path}"/>
-            <arg value="-library-path+=${core_path}"/>
             <arg value="-output=${swf}/${swf_name}.swf"/>
             <arg value="-frame=two,${main_class}"/>
             <arg value="-keep-as3-metadata+=Autowired"/>
@@ -90,19 +80,34 @@
     </target>
     <target name="test">
         <mkdir dir="${out}/tests/report/html"/>
-        <java jar="${FLEX_HOME}/lib/mxmlc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">
-            <arg value="${basedir}/tests/TestSuite.as"/>
-            <arg value="-source-path+=${src}"/>
-            <arg value="-swf-version=${swf-version}"/>
-            <arg value="-library-path+=${flexunit}"/>
-            <arg value="-library-path+=${internal_libs_path}"/>
-            <arg value="-library-path+=${core_path}"/>
-            <!--<arg value="-library-path+=${as3-signals}"/>-->
-            <arg value="-output=${out}/tests/TestRunner.swf"/>
-            <arg value="-keep-as3-metadata+=Autowired"/>
-            <arg value="-keep-as3-metadata+=PostConstruct"/>
-            <arg value="-debug=false"/>
-        </java>
+        <mxmlc
+            file="${basedir}/tests/TestSuite.as"
+            output="${out}/tests/TestRunner.swf"
+            fork="true"
+            failonerror="true"
+            debug="false"
+        >
+            <source-path path-element="${src}"/>
+            <source-path path-element="${FLEX_HOME}/frameworks"/>
+            <library-path dir="${flexunit}" includes="**/*" append="true"/>
+            <library-path dir="${dependencies_path}" includes="**/*" append="true"/>
+            <!--<library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>-->
+            <!--<library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>-->
+            <keep-as3-metadata name="Autowired"/>
+            <keep-as3-metadata name="PostConstruct"/>
+        </mxmlc>
+        <!--<java jar="${FLEX_HOME}/lib/mxmlc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">-->
+            <!--<arg value="${basedir}/tests/TestSuite.as"/>-->
+            <!--<arg value="-source-path+=${src}"/>-->
+            <!--<arg value="-swf-version=${swf-version}"/>-->
+            <!--<arg value="-library-path+=${flexunit}"/>-->
+            <!--<arg value="-library-path+=${dependencies_path}/**/*"/>-->
+            <!--&lt;!&ndash;<arg value="-library-path+=${as3-signals}"/>&ndash;&gt;-->
+            <!--<arg value="-output=${out}/tests/TestRunner.swf"/>-->
+            <!--<arg value="-keep-as3-metadata+=Autowired"/>-->
+            <!--<arg value="-keep-as3-metadata+=PostConstruct"/>-->
+            <!--<arg value="-debug=false"/>-->
+        <!--</java>-->
         <flexunit
                 command="${FLASH_PLAYER_EXE}"
                 player="flash"
@@ -175,13 +180,9 @@
 
     <!--//////////////////////////////////////////////////////////////////////////////////////-->
 
-    <target name="prepare" depends="-init-ooo">
-        <mavendep pom="pom.xml"/>
-    </target>
-
     <!-- Set maven.deploy.repo to deploy to a local maven repo:
         ant -Dmaven.deploy.repo=file:///path/to/local/repo maven-deploy -->
-    <target name="maven-deploy">
+    <target name="maven-deploy" depends="prepare">
         <mavendeploy file="${swc}/${swc_name}" pom="pom.xml"/>
         <!--<maveninstall file="${swc}/${swc_name}" pom="pom.xml"/>-->
     </target>
