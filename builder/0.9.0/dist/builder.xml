@@ -38,6 +38,7 @@
             <external-library-path dir="${dependencies_path}" includes="**/*.ane"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="**/*.swc"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="**/*.swc"/>
+            <define name="CONFIG::debug" value="true" />
         </asdoc>
         <zip destfile="${swc}/${swc_name}" update="true">
             <zipfileset dir="${doc}" prefix="docs">
