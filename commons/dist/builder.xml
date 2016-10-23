@@ -9,9 +9,7 @@
 	<taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
 
     <dirname property="imported.basedir" file="${user.home}/.m2/repository/com/domwires/builder/${version}"/>
-    <property file="${imported.basedir}/common.properties"/>
     <property file="${imported.basedir}/server.properties"/>
-    <property file="${basedir}/version.properties"/>
 
     <property name="sftp-path-suffix" value=""/>
     <property name="src" value="${basedir}/src"/>
@@ -23,21 +21,17 @@
     <property name="path" value="."/>
     <!--<property name="maven.deploy.repo" value="https://raw.github.com/CrazyFlasher/maven-repo/master"/>-->
 
-    <property name="flexunit" location="${imported.basedir}/../../flexunit"/>
+    <property name="flexunit" location="${user.home}/.m2/repository/org/apache/flexunit/${flexunit.version}"/>
+
+    <taskdef resource="flexUnitTasks.tasks" classpath="${flexunit}/flexUnitTasks-${flexunit.version}-20140410.jar"/>
 
     <!--Dependencies-->
     <property name="core_path" value="${basedir}/${path}"/>
     <property name="internal_libs_path" value="${basedir}/dependencies"/>
 
-    <echo>${internal_libs_path}</echo>
+    <!--<target name="package_fat_swc" depends="clean,fat-swc,asdoc,test"/>-->
 
-    <property name="ver.num" value="${build.release.number}.${build.major.number}.${build.minor.number}"/>
-	
-	<taskdef resource="flexUnitTasks.tasks" classpath="${flexunit}/flexUnitTasks-4.2.0-20140410.jar"/>
-
-    <target name="package_fat_swc" depends="clean,fat-swc,asdoc,test"/>
-
-    <target name="package_swc" depends="clean,swc,asdoc,test"/>
+    <target name="package_swc" depends="clean,prepare-flexunit,swc,asdoc,test,maven-deploy"/>
     <target name="asdoc">
         <delete dir="${doc}"/>
         <asdoc output="${doc}" dir="${FLEX_HOME}" lenient="true" failonerror="true">
@@ -64,16 +58,16 @@
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
         </compc>
     </target>
-    <target name="fat-swc">
-        <compc output="${swc}/${swc_fat_name}">
-            <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
-            <include-sources dir="${src}" includes="*"/>
-            <include-libraries dir="${core_path}" includes="**/*"/>
-            <include-libraries dir="${internal_libs_path}" includes="*.swc"/>
-            <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>
-            <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
-        </compc>
-    </target>
+    <!--<target name="fat-swc">-->
+        <!--<compc output="${swc}/${swc_fat_name}">-->
+            <!--<load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>-->
+            <!--<include-sources dir="${src}" includes="*"/>-->
+            <!--<include-libraries dir="${core_path}" includes="**/*"/>-->
+            <!--<include-libraries dir="${internal_libs_path}" includes="*.swc"/>-->
+            <!--<external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>-->
+            <!--<external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>-->
+        <!--</compc>-->
+    <!--</target>-->
     <target name="swf">
         <mkdir dir="${swf}"/>
         <echo>-----------------------------------</echo>
@@ -127,47 +121,57 @@
         </junitreport>
         <fail if="flexunit.failure" message="Unit test(s) failed. See reports!"/>
     </target>
+    <target name="check-flexunit">
+        <available file="${flexunit}/flexUnitTasks-${flexunit.version}-20140410.jar" property="flexunit.present"/>
+    </target>
+    <target name="prepare-flexunit" depends="check-flexunit" unless="flexunit.present">
+        <unzip src="${flexunit}/flexunit-${flexunit.version}.zip" dest="${flexunit}"/>
+        <taskdef resource="flexUnitTasks.tasks" classpath="${flexunit}/flexUnitTasks-${flexunit.version}-20140410.jar"/>
+    </target>
+    <target name="prepare" depends="-init-ooo">
+        <mavendep pom="pom.xml"/>
+    </target>
     <target name="clean">
         <delete dir="${out}"/>
     </target>
-    <target name="increase_minor_version">
-        <propertyfile file="version.properties">
-            <entry key="build.minor.number" type="int" operation="+" value="1" pattern="0" />
-        </propertyfile>
-    </target>
-    <target name="increase_major_version">
-        <propertyfile file="version.properties">
-            <entry key="build.major.number" type="int" operation="+" value="1" pattern="0" />
-            <entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />
-        </propertyfile>
-    </target>
-    <target name="increase_release_version">
-    <propertyfile file="version.properties">
-        <entry key="build.release.number" type="int" operation="+" value="1" pattern="0" />
-        <entry key="build.major.number" type="int" operation="=" value="0" pattern="0" />
-        <entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />
-    </propertyfile>
-    </target>
-    <target name="upload_docs">
-        <sshexec host="${sftp-host}"
-                 username="${sftp-login}"
-                 password="${sftp-password}"
-                 command="${sftp-script-path} ${sftp-path}/${sftp-path-suffix}/doc"
-                 trust="true"
-        />
-        <scp todir="${sftp-login}:${sftp-password}@${sftp-host}:${sftp-path}/${sftp-path-suffix}/doc" trust="true">
-            <fileset dir="${doc}"/>
-        </scp>
-    </target>
-    <target name="upload_swc">
-        <zip destfile="${swc}/${ant.project.name}_latest.zip"
-             basedir="${swc}"
-             includes="*.swc"
-        />
-        <scp file="${swc}/${ant.project.name}_latest.zip" todir="${sftp-login}:${sftp-password}@${sftp-host}:${sftp-path}/${sftp-path-suffix}"
-             trust="true"/>
-        <delete file="${swc}/${ant.project.name}_latest.zip"/>
-    </target>
+    <!--<target name="increase_minor_version">-->
+        <!--<propertyfile file="version.properties">-->
+            <!--<entry key="build.minor.number" type="int" operation="+" value="1" pattern="0" />-->
+        <!--</propertyfile>-->
+    <!--</target>-->
+    <!--<target name="increase_major_version">-->
+        <!--<propertyfile file="version.properties">-->
+            <!--<entry key="build.major.number" type="int" operation="+" value="1" pattern="0" />-->
+            <!--<entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />-->
+        <!--</propertyfile>-->
+    <!--</target>-->
+    <!--<target name="increase_release_version">-->
+    <!--<propertyfile file="version.properties">-->
+        <!--<entry key="build.release.number" type="int" operation="+" value="1" pattern="0" />-->
+        <!--<entry key="build.major.number" type="int" operation="=" value="0" pattern="0" />-->
+        <!--<entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />-->
+    <!--</propertyfile>-->
+    <!--</target>-->
+    <!--<target name="upload_docs">-->
+        <!--<sshexec host="${sftp-host}"-->
+                 <!--username="${sftp-login}"-->
+                 <!--password="${sftp-password}"-->
+                 <!--command="${sftp-script-path} ${sftp-path}/${sftp-path-suffix}/doc"-->
+                 <!--trust="true"-->
+        <!--/>-->
+        <!--<scp todir="${sftp-login}:${sftp-password}@${sftp-host}:${sftp-path}/${sftp-path-suffix}/doc" trust="true">-->
+            <!--<fileset dir="${doc}"/>-->
+        <!--</scp>-->
+    <!--</target>-->
+    <!--<target name="upload_swc">-->
+        <!--<zip destfile="${swc}/${ant.project.name}_latest.zip"-->
+             <!--basedir="${swc}"-->
+             <!--includes="*.swc"-->
+        <!--/>-->
+        <!--<scp file="${swc}/${ant.project.name}_latest.zip" todir="${sftp-login}:${sftp-password}@${sftp-host}:${sftp-path}/${sftp-path-suffix}"-->
+             <!--trust="true"/>-->
+        <!--<delete file="${swc}/${ant.project.name}_latest.zip"/>-->
+    <!--</target>-->
 
     <!--//////////////////////////////////////////////////////////////////////////////////////-->
 
@@ -177,8 +181,7 @@
 
     <!-- Set maven.deploy.repo to deploy to a local maven repo:
         ant -Dmaven.deploy.repo=file:///path/to/local/repo maven-deploy -->
-    <target name="maven-deploy" depends="prepare,swc"
-            description="Deploys build artifacts to a Maven repository.">
+    <target name="maven-deploy">
         <mavendeploy file="${swc}/${swc_name}" pom="pom.xml"/>
         <!--<maveninstall file="${swc}/${swc_name}" pom="pom.xml"/>-->
     </target>

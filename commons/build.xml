@@ -10,8 +10,8 @@
     <!-- Set maven.deploy.repo to deploy to a local maven repo:
             ant -Dmaven.deploy.repo=file:///path/to/local/repo maven-deploy -->
     <target name="maven-deploy" depends="prepare">
-        <maveninstall file="${deploy.dir}/builder.xml" pom="pom.xml"/>
-        <!--<mavendeploy file="${deploy.dir}/builder.xml" pom="pom.xml"/>-->
+        <!--<maveninstall file="${deploy.dir}/builder.xml" pom="pom.xml"/>-->
+        <mavendeploy file="${deploy.dir}/builder.xml" pom="pom.xml"/>
     </target>
 
     <target name="prepare" depends="-init-ooo">
