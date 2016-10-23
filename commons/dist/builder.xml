@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
-<project name="commons" basedir="" default="package_swc">
+<project name="domwires-builder" basedir="" default="package_swc">
 
 	<property environment="env."/>
 	<property name="FLEX_HOME" location="${env.FLEX_HOME}"/>
 	<property name="FLASH_PLAYER_EXE" location="${env.FLASH_PLAYER_EXE}"/>
 	<property name="FLASH_IDE_EXE" location="${env.FLASH_IDE_EXE}"/>
-
+    <property name="version" value="0.9.0"/>
 	<taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
 
-    <dirname property="imported.basedir" file="${ant.file.commons}"/>
+    <dirname property="imported.basedir" file="${user.home}/.m2/repository/com/domwires/builder/${version}"/>
     <property file="${imported.basedir}/common.properties"/>
     <property file="${imported.basedir}/server.properties"/>
     <property file="${basedir}/version.properties"/>
