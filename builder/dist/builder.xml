@@ -35,6 +35,8 @@
         <asdoc output="${doc}" dir="${FLEX_HOME}/frameworks" lenient="true" failonerror="true">
             <doc-sources path-element="${src}"/>
             <external-library-path dir="${dependencies_path}" includes="**/*.swc"/>
+            <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="**/*.swc"/>
+            <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="**/*.swc"/>
         </asdoc>
         <zip destfile="${swc}/${swc_name}" update="true">
             <zipfileset dir="${doc}" prefix="docs">
@@ -52,6 +54,7 @@
             <external-library-path dir="${dependencies_path}" includes="**/*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
+
         </compc>
     </target>
     <!--<target name="fat-swc">-->
