@@ -1,8 +1,8 @@
 <?xml version="1.0" standalone="yes"?>
-<project name="starling-extension-graphics-deploy" default="maven-deploy" basedir=".">
+<project name="builder-deploy" default="maven-deploy" basedir=".">
 
     <property name="ooo-build.vers" value="2.10"/>
-    <ant antfile="../etc/bootstrap.xml"/>
+    <ant antfile="../../etc/bootstrap.xml"/>
     <import file="${user.home}/.m2/ooo-build/${ooo-build.vers}/ooo-build.xml"/>
 
     <property name="deploy.dir" value="dist"/>
@@ -10,7 +10,8 @@
     <!-- Set maven.deploy.repo to deploy to a local maven repo:
             ant -Dmaven.deploy.repo=file:///path/to/local/repo maven-deploy -->
     <target name="maven-deploy" depends="prepare">
-        <mavendeploy file="${deploy.dir}/starling-extension-graphics.swc" pom="pom.xml"/>
+        <!--<maveninstall file="${deploy.dir}/builder.xml" pom="pom.xml"/>-->
+        <mavendeploy file="${deploy.dir}/builder.xml" pom="pom.xml"/>
     </target>
 
     <target name="prepare" depends="-init-ooo">
