@@ -67,22 +67,38 @@
             <!--<external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>-->
         <!--</compc>-->
     <!--</target>-->
-    <target name="swf">
-        <mkdir dir="${swf}"/>
-        <java jar="${FLEX_HOME}/lib/mxmlc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">
-            <arg value="${src}/StartUp.as"/>
-            <arg value="-source-path+=${src}"/>
-            <arg value="-swf-version=${swf-version}"/>
-            <arg value="-library-path+=${dependencies_path}"/>
-            <arg value="-target-player=${target-player}"/>
-            <arg value="-output=${swf}/${swf_name}.swf"/>
-            <arg value="-frame=two,${main_class}"/>
-            <arg value="-keep-as3-metadata+=Autowired"/>
-            <arg value="-keep-as3-metadata+=PostConstruct"/>
-            <arg value="-compiler.advanced-telemetry=${debug}"/>
-            <arg value="-debug=${debug}"/>
-        </java>
-    </target>
+    <!--<target name="swf">-->
+        <!--<mkdir dir="${swf}"/>-->
+        <!--<mxmlc-->
+                <!--file="${src}/StartUp.as"-->
+                <!--output="${out}/tests/TestRunner.swf"-->
+                <!--fork="true"-->
+                <!--failonerror="true"-->
+                <!--debug="${debug}"-->
+        <!--&gt;-->
+            <!--<source-path path-element="${src}"/>-->
+            <!--<source-path path-element="${FLEX_HOME}/frameworks"/>-->
+            <!--<library-path dir="${dependencies_path}" includes="**/*" append="true"/>-->
+            <!--&lt;!&ndash;<library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;<library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>&ndash;&gt;-->
+            <!--<keep-as3-metadata name="Autowired"/>-->
+            <!--<keep-as3-metadata name="PostConstruct"/>-->
+
+        <!--</mxmlc>-->
+        <!--<java jar="${FLEX_HOME}/lib/mxmlc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">-->
+            <!--<arg value="${src}/StartUp.as"/>-->
+            <!--<arg value="-source-path+=${src}"/>-->
+            <!--<arg value="-swf-version=${swf-version}"/>-->
+            <!--<arg value="-library-path+=${dependencies_path}"/>-->
+            <!--<arg value="-target-player=${target-player}"/>-->
+            <!--<arg value="-output=${swf}/${swf_name}.swf"/>-->
+            <!--<arg value="-frame=two,${main_class}"/>-->
+            <!--<arg value="-keep-as3-metadata+=Autowired"/>-->
+            <!--<arg value="-keep-as3-metadata+=PostConstruct"/>-->
+            <!--<arg value="-compiler.advanced-telemetry=${debug}"/>-->
+            <!--<arg value="-debug=${debug}"/>-->
+        <!--</java>-->
+    <!--</target>-->
     <target name="test">
         <mkdir dir="${out}/tests/report/html"/>
         <mxmlc
