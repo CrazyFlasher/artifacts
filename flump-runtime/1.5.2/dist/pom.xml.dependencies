@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-dependencies" default="init-dependencies">
+<target name="init-dependencies">
+    <echo level="info" message="Loading dependency paths from file: C:\Users\CrazyFlasher\Documents\work\projects\domwires-builder\flump-runtime\1.5.2\dist\pom.xml.dependencies"/>
+    <property name="com.timconkling:react-as3:swc" value="C:\Users\CrazyFlasher\.m2\repository\com\timconkling\react-as3\1.2.1\react-as3-1.2.1.swc"/>
+    <fileset id="com.timconkling:react-as3:swc" dir="C:\Users\CrazyFlasher\.m2\repository\com\timconkling\react-as3\1.2.1">
+      <include name="react-as3-1.2.1.swc"/>
+    </fileset>
+    <property name="com.gamua:starling-framework:swc" value="C:\Users\CrazyFlasher\.m2\repository\com\gamua\starling-framework\2.1\starling-framework-2.1.swc"/>
+    <fileset id="com.gamua:starling-framework:swc" dir="C:\Users\CrazyFlasher\.m2\repository\com\gamua\starling-framework\2.1">
+      <include name="starling-framework-2.1.swc"/>
+    </fileset>
+    <property name="deng:fzip:swc" value="C:\Users\CrazyFlasher\.m2\repository\deng\fzip\a5430bd\fzip-a5430bd.swc"/>
+    <fileset id="deng:fzip:swc" dir="C:\Users\CrazyFlasher\.m2\repository\deng\fzip\a5430bd">
+      <include name="fzip-a5430bd.swc"/>
+    </fileset>
+    <path id="pom.xml.path">
+      <pathelement path="C:\Users\CrazyFlasher\.m2\repository\com\timconkling\react-as3\1.2.1\react-as3-1.2.1.swc"/>
+      <pathelement path="C:\Users\CrazyFlasher\.m2\repository\com\gamua\starling-framework\2.1\starling-framework-2.1.swc"/>
+      <pathelement path="C:\Users\CrazyFlasher\.m2\repository\deng\fzip\a5430bd\fzip-a5430bd.swc"/>
+    </path>
+    <fileset id="pom.xml.fileset" dir="C:\Users\CrazyFlasher\.m2\repository">
+      <include name="com\gamua\starling-framework\2.1\starling-framework-2.1.swc"/>
+      <include name="com\timconkling\react-as3\1.2.1\react-as3-1.2.1.swc"/>
+      <include name="deng\fzip\a5430bd\fzip-a5430bd.swc"/>
+    </fileset>
+  </target>
+</project>

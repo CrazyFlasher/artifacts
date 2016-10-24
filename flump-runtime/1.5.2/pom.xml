@@ -11,4 +11,24 @@
       <url>https://raw.github.com/CrazyFlasher/maven-repo/master</url>
     </repository>
   </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>com.timconkling</groupId>
+      <artifactId>react-as3</artifactId>
+      <version>1.2.1</version>
+      <type>swc</type>
+    </dependency>
+    <dependency>
+      <groupId>com.gamua</groupId>
+      <artifactId>starling-framework</artifactId>
+      <version>2.1</version>
+      <type>swc</type>
+    </dependency>
+    <dependency>
+      <groupId>deng</groupId>
+      <artifactId>fzip</artifactId>
+      <version>a5430bd</version>
+      <type>swc</type>
+    </dependency>
+  </dependencies>
 </project>
