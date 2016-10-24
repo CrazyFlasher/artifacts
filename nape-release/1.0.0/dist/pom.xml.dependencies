@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="maven-dependencies" default="init-dependencies">
 <target name="init-dependencies">
-    <echo level="info" message="Loading dependency paths from file: C:\Users\CrazyFlasher\Documents\work\projects\domwires-builder\nape-release\dist\pom.xml.dependencies"/>
+    <echo level="info" message="Loading dependency paths from file: C:\Users\CrazyFlasher\Documents\work\projects\domwires-builder\nape-release\1.0.0\dist\pom.xml.dependencies"/>
     <path id="pom.xml.path"/>
     <fileset id="pom.xml.fileset" dir="C:\Users\CrazyFlasher\.m2\repository"/>
   </target>
