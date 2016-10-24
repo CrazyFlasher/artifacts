@@ -27,7 +27,7 @@
     <!--<target name="package_fat_swc" depends="clean,fat-swc,asdoc,test"/>-->
 
     <!--Dependencies-->
-    <property name="dependencies_path" location="${user.home}/.m2/repository/"/>
+    <property name="dependencies_path" location="${user.home}/.m2/flash-dependencies"/>
 
     <target name="package_swc" depends="clean,swc,test,asdoc"/>
     <target name="asdoc">
@@ -50,11 +50,11 @@
         <delete dir="${doc}"/>
     </target>
     <target name="swc">
-        <mkdir dir="${swc}"/>
-        <compc output="${swc}/${swc_name}">
+        <!--<mkdir dir="${swc}"/>-->
+        <compc output="${swc}/${swc_name}" failonerror="true">
             <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
-            <include-sources dir="${src}" includes="*/**"/>
-            <external-library-path dir="${dependencies_path}" includes="**/*"/>
+            <include-sources dir="${src}" includes="*"/>
+            <external-library-path dir="${dependencies_path}" includes="**/*.swc"/>
             <!--<external-library-path dir="${dependencies_path}" includes="**/*.ane"/>-->
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/player/${target-player}" includes="*"/>
             <external-library-path dir="${FLEX_HOME}/frameworks/libs/air" includes="*"/>
@@ -100,7 +100,7 @@
             <!--<arg value="-debug=${debug}"/>-->
         <!--</java>-->
     <!--</target>-->
-    <target name="test">
+    <target name="test" depends="prepare-flexunit">
         <mkdir dir="${out}/tests/report/html"/>
         <mxmlc
             file="${basedir}/tests/TestSuite.as"
@@ -156,6 +156,7 @@
         <taskdef resource="flexUnitTasks.tasks" classpath="${flexunit}/flexUnitTasks-${flexunit.version}-20140410.jar"/>
     </target>
     <target name="prepare" depends="-init-ooo">
+        <delete dir="${deploy.dir}"/>
         <mavendep pom="pom.xml"/>
     </target>
     <target name="clean">
@@ -207,6 +208,14 @@
     <target name="maven-deploy" depends="prepare">
         <mavendeploy file="${swc}/${swc_name}" pom="pom.xml"/>
         <!--<maveninstall file="${swc}/${swc_name}" pom="pom.xml"/>-->
+        <antcall target="copy_all_swc"/>
     </target>
-
+    <target name="copy_all_swc">
+        <copy todir="${dependencies_path}">
+            <flattenmapper/>
+            <fileset dir="${user.home}/.m2/repository/">
+                <include name="**/*.swc"/>
+            </fileset>
+        </copy>
+    </target>
 </project>
