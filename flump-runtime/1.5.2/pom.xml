@@ -20,8 +20,8 @@
     </dependency>
     <dependency>
       <groupId>com.gamua</groupId>
-      <artifactId>starling-framework</artifactId>
-      <version>2.1</version>
+      <artifactId>starling</artifactId>
+      <version>2.1.0</version>
       <type>swc</type>
     </dependency>
     <dependency>

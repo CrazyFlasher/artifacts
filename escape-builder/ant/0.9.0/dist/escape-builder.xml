@@ -1,0 +1,761 @@
+<?xml version="1.0"?>
+<project name="game" basedir="../../../" default="package">
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+
+    <property environment="env."/>
+    <property name="FLEX_HOME" location="${env.FLEX_HOME}"/>
+    <property name="FLASH_IDE_EXE" location="${env.FLASH_IDE_EXE}"/>
+    <property name="FLUMP_HOME" location="${env.FLUMP_HOME}"/>
+    <property name="CERT_PATH" location="${env.CERT_PATH}"/>
+
+    <taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
+
+    <dirname property="imported.basedir" file="${ant.file.game}/../"/>
+    <property file="${imported.basedir}/ant/build.properties"/>
+    <property file="${basedir}/build/ant/build.properties"/>
+    <property file="${basedir}/build/ant/version.properties"/>
+    <property file="${basedir}/build/ant/local.properties"/>
+
+    <import file="${user.home}/.m2/repository/com/domwires/builder/0.9.0/builder-0.9.0.xml" optional="true"/>
+
+    <property name="jsfl" value="${user.home}/.m2/repository/com/crazyflasher/escape/escape-builder/0.9.0/escape-builder-0.9.0.jsfl"/>
+    <property name="jsfl_temp" value="${imported.basedir}/jsfl/build_temp.jsfl"/>
+
+    <property name="src" value="${basedir}/src"/>
+    <property name="src-gen" value="${basedir}/src-gen"/>
+    <property name="out" value="${basedir}/out"/>
+    <property name="dist" value="${basedir}/dist"/>
+    <property name="swf" value="${out}/swf"/>
+
+    <!--<property name="internal_libs_path" value="${basedir}/dependencies"/>-->
+    <property name="ver.num" value="${build.release.number}.${build.major.number}.${build.minor.number}"/>
+    <property name="swf_name" value="${ant.project.name}-${ver.num}"/>
+    <property name="main_class" value="PreInit"/>
+
+    <target name="package" depends="
+        clean,
+        prepare,
+        package-resources,
+        apk-captive-hd,
+        apk-captive-sd,
+        ipa-ad-hoc,
+        exe-desktop,
+        increase_minor_version"
+    />
+
+    <target name="package-resources" depends="export_lobby_assets,compress_lobby_assets,package_all_levels,package_all_minigames"/>
+    <!--level-->
+
+    <target name="package_all_levels">
+        <antcall target="package_level">
+            <param name="export_bgs" value="true"/>
+            <param name="level_id" value="level_0"/>
+        </antcall>
+        <antcall target="generate_levels_data"/>
+    </target>
+
+    <target name="package_level" depends="export_level_assets,compress_level_assets,export_level_json_bgs,compress_info_atlas,resolve-level-images">
+        <antcall target="compile_level">
+            <param name="export_bgs" value="false"/>
+        </antcall>
+        <delete file="${basedir}/resources/levels/${level_id}/level/${level_id}.swf"/>
+    </target>
+    <target name="resolve-level-images">
+        <copy
+            file="${basedir}/resources/levels/${level_id}/levelComplete.jpg"
+            todir="${out}/levels-sd/${level_id}/images"
+        />
+        <copy
+            file="${basedir}/resources/levels/${level_id}/levelComplete.jpg"
+            todir="${out}/levels-hd/${level_id}/images"
+        />
+    </target>
+
+    <target name="generate_levels_data">
+        <!--TODO: generate data.json automatically-->
+    </target>
+
+    <target name="compile_level">
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/levels/${level_id}/level/tempfile"/>
+        <copy file="${jsfl}" tofile="${jsfl_temp}"/>
+        <replace file="${jsfl_temp}" token="@@@1" value="${basedir}/resources/levels/${level_id}/level/"/>
+        <replace file="${jsfl_temp}" token="@@@2" value="${level_id}.fla"/>
+        <replace file="${jsfl_temp}" token="@@@3" value="${export_bgs}"/>
+        <replace file="${jsfl_temp}" token="@@@4" value="level"/>
+        <replace file="${jsfl_temp}" token="\" value="/"/>
+        <exec executable="${FLASH_IDE_EXE}">
+            <arg line="${jsfl_temp}"/>
+        </exec>
+        <waitfor>
+            <available file="${basedir}/resources/levels/${level_id}/level/tempfile"/>
+        </waitfor>
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/levels/${level_id}/level/tempfile"/>
+    </target>
+
+    <target name="export_level_json_bgs">
+        <antcall target="compile_level">
+            <param name="export_bgs" value="true"/>
+        </antcall>
+        <exec executable="cmd">
+            <arg
+                    line="/c escape-editor-air ${basedir}/resources/levels/${level_id}/level/${level_id}.swf ${out}/levels-sd/${level_id}/images/ ${export_bgs} 0.5 223 223"/>
+        </exec>
+        <antcall target="print_level_exporter_log">
+            <param name="logfile_path" value="${out}/levels-sd/${level_id}/exporter.log"/>
+        </antcall>
+        <antcall target="create_items_info_atlas">
+            <param name="graphics-type" value="sd"/>
+        </antcall>
+
+        <exec executable="cmd">
+            <arg
+                    line="/c escape-editor-air ${basedir}/resources/levels/${level_id}/level/${level_id}.swf ${out}/levels-hd/${level_id}/images/ ${export_bgs} 0.9 223 223"/>
+        </exec>
+        <antcall target="print_level_exporter_log">
+            <param name="logfile_path" value="${out}/levels-hd/${level_id}/exporter.log"/>
+        </antcall>
+        <antcall target="create_items_info_atlas">
+            <param name="graphics-type" value="hd"/>
+        </antcall>
+    </target>
+    <target name="create_items_info_atlas" depends="$prepare-tagen">
+        <delete>
+            <fileset dir="${out}/levels-${graphics-type}/${level_id}/images/itemsInfo">
+                <include name="**/*.xml"/>
+                <include name="itemsInfo_atlas.png"/>
+            </fileset>
+        </delete>
+        <exec executable="cmd">
+            <arg
+                    line="/c ${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}/ta-gen -in ${out}/levels-${graphics-type}/${level_id}/images/itemsInfo -out ${out}/levels-${graphics-type}/${level_id}/images/itemsInfo/itemsInfo_atlas"/>
+        </exec>
+        <delete>
+            <fileset dir="${out}/levels-${graphics-type}/${level_id}/images/itemsInfo">
+                <exclude name="**/*.xml"/>
+                <exclude name="itemsInfo_atlas.png"/>
+            </fileset>
+        </delete>
+    </target>
+    <target name="$check-tagen">
+        <available file="${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}/ta-gen.swf" property="tagen.present"/>
+    </target>
+    <target name="$prepare-tagen" depends="check-flexunit" unless="tagen.present">
+        <unzip
+                src="${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}/ta-gen-${tagen-version}.zip"
+                dest="${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}"
+        />
+    </target>
+    <target name="compress_info_atlas">
+        <exec executable="cmd">
+            <arg
+                    line="/c ${user.home}/.m2/repository/png/pngcrush/${pngcrush-version}/pngcrush-${pngcrush-version}.exe -ow ${out}/levels-sd/${level_id}/images/itemsInfo/itemsInfo_atlas.png"/>
+        </exec>
+        <exec executable="cmd">
+            <arg
+                    line="/c ${user.home}/.m2/repository/png/pngcrush/${pngcrush-version}/pngcrush-${pngcrush-version}.exe -ow ${out}/levels-hd/${level_id}/images/itemsInfo/itemsInfo_atlas.png"/>
+        </exec>
+    </target>
+
+    <target name="export_level_assets" depends="copy_common_ingameUI">
+        <antcall target="compile_level">
+            <param name="export_bgs" value="false"/>
+        </antcall>
+        <delete dir="${basedir}/resources/levels/${level_id}/level/sd"/>
+        <delete dir="${basedir}/resources/levels/${level_id}/level/hd"/>
+        <delete file="${FLUMP_HOME}/exporter.log"/>
+        <exec executable="cmd">
+            <arg line="/c Flump --export '${basedir}/resources/levels/${level_id}/level/project.flump' --unmodified 'true'"/>
+        </exec>
+        <waitfor>
+            <available file="${FLUMP_HOME}/exporter.log"/>
+        </waitfor>
+        <antcall target="print_flump_log"/>
+        <copy file="${basedir}/resources/levels/${level_id}/level/sd/${level_id}.zip" tofile="${out}/levels-sd/${level_id}/items.zip"/>
+        <copy file="${basedir}/resources/levels/${level_id}/level/hd/${level_id}.zip" tofile="${out}/levels-hd/${level_id}/items.zip"/>
+        <delete dir="${basedir}/resources/levels/${level_id}/level/sd"/>
+        <delete dir="${basedir}/resources/levels/${level_id}/level/hd"/>
+    </target>
+    <target name="copy_common_ingameUI">
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/ingameUI/tempfile"/>
+        <copy file="${jsfl}" tofile="${jsfl_temp}"/>
+        <replace file="${jsfl_temp}" token="@@@1" value="${basedir}/resources/ingameUI/"/>
+        <replace file="${jsfl_temp}" token="@@@2" value="ingameUI.fla"/>
+        <replace file="${jsfl_temp}" token="@@@4" value="ingameUI"/>
+        <replace file="${jsfl_temp}" token="@@@5" value="${basedir}/resources/levels/${level_id}/level/${level_id}.fla"/>
+        <replace file="${jsfl_temp}" token="\" value="/"/>
+        <exec executable="${FLASH_IDE_EXE}">
+            <arg line="${jsfl_temp}"/>
+        </exec>
+        <waitfor>
+            <available file="${basedir}/resources/ingameUI/tempfile"/>
+        </waitfor>
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/ingameUI/tempfile"/>
+    </target>
+    <target name="compress_level_assets">
+        <antcall target="$compress_pngs_in_zip">
+            <param name="zip_path" value="${out}/levels-sd/${level_id}"/>
+            <param name="zip_name" value="items.zip"/>
+        </antcall>
+        <antcall target="$compress_pngs_in_zip">
+            <param name="zip_path" value="${out}/levels-hd/${level_id}"/>
+            <param name="zip_name" value="items.zip"/>
+        </antcall>
+    </target>
+    <target name="$compress_pngs_in_minigame_zip">
+        <basename file="${zip_path_name}" property="zip_name"/>
+        <antcall target="$compress_pngs_in_zip"/>
+    </target>
+    <target name="$compress_pngs_in_zip">
+        <unzip src="${zip_path}/${zip_name}" dest="${zip_path}/temp"/>
+        <delete file="${zip_path}/${zip_name}"/>
+        <exec executable="cmd">
+            <arg
+                    line="/c ${user.home}/.m2/repository/png/pngcrush/${pngcrush-version}/pngcrush-${pngcrush-version}.exe -dir ${zip_path}/temp/out -ow ${zip_path}/temp/*.png"/>
+        </exec>
+        <move todir="${zip_path}/temp">
+            <fileset dir="${zip_path}/temp/out"/>
+        </move>
+        <delete dir="${zip_path}/temp/out"/>
+        <zip destfile="${zip_path}/${zip_name}">
+            <zipfileset dir="${zip_path}/temp"/>
+        </zip>
+        <delete dir="${zip_path}/temp"/>
+    </target>
+    <!--lobby-->
+
+    <target name="compile_lobby">
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/lobby/tempfile"/>
+        <copy file="${jsfl}" tofile="${jsfl_temp}"/>
+        <replace file="${jsfl_temp}" token="@@@1" value="${basedir}/resources/lobby/"/>
+        <replace file="${jsfl_temp}" token="@@@2" value="lobby.fla"/>
+        <replace file="${jsfl_temp}" token="@@@4" value="lobby"/>
+        <replace file="${jsfl_temp}" token="\" value="/"/>
+        <exec executable="${FLASH_IDE_EXE}">
+            <arg line="${jsfl_temp}"/>
+        </exec>
+        <waitfor>
+            <available file="${basedir}/resources/lobby/tempfile"/>
+        </waitfor>
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/lobby/tempfile"/>
+    </target>
+
+    <target name="export_lobby_assets" depends="compile_lobby">
+        <delete dir="${basedir}/resources/lobby/sd"/>
+        <delete dir="${basedir}/resources/lobby/hd"/>
+        <delete file="${FLUMP_HOME}/exporter.log"/>
+        <exec executable="cmd">
+            <arg line="/c Flump --export '${basedir}/resources/lobby/project.flump' --unmodified 'true'"/>
+        </exec>
+        <waitfor>
+            <available file="${FLUMP_HOME}/exporter.log"/>
+        </waitfor>
+        <antcall target="print_flump_log"/>
+        <copy file="${basedir}/resources/lobby/sd/lobby.zip" tofile="${out}/lobby-sd/lobby.zip"/>
+        <copy file="${basedir}/resources/lobby/hd/lobby.zip" tofile="${out}/lobby-hd/lobby.zip"/>
+        <delete dir="${basedir}/resources/lobby/sd"/>
+        <delete dir="${basedir}/resources/lobby/hd"/>
+    </target>
+    <target name="compress_lobby_assets">
+        <antcall target="$compress_pngs_in_zip">
+            <param name="zip_path" value="${out}/lobby-sd"/>
+            <param name="zip_name" value="lobby.zip"/>
+        </antcall>
+        <antcall target="$compress_pngs_in_zip">
+            <param name="zip_path" value="${out}/lobby-hd"/>
+            <param name="zip_name" value="lobby.zip"/>
+        </antcall>
+    </target>
+
+    <target name="print_flump_log">
+        <loadfile property="flump_log" srcFile="${FLUMP_HOME}/exporter.log"/>
+        <echo>${flump_log}</echo>
+    </target>
+    <target name="print_level_exporter_log">
+        <loadfile property="level_exporter_log" srcFile="${logfile_path}"/>
+        <echo>${level_exporter_log}</echo>
+    </target>
+    <!--minigames-->
+
+    <target name="compile_all_minigames">
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/levels/${level_id}/minigames/tempfile"/>
+        <copy file="${jsfl}" tofile="${jsfl_temp}"/>
+        <replace file="${jsfl_temp}" token="@@@1" value="${basedir}/resources/levels/${level_id}/minigames/"/>
+        <replace file="${jsfl_temp}" token="@@@4" value="all_minigames"/>
+        <replace file="${jsfl_temp}" token="\" value="/"/>
+        <exec executable="${FLASH_IDE_EXE}">
+            <arg line="${jsfl_temp}"/>
+        </exec>
+        <waitfor>
+            <available file="${basedir}/resources/levels/${level_id}/minigames/tempfile"/>
+        </waitfor>
+        <delete file="${jsfl_temp}"/>
+        <delete file="${basedir}/resources/levels/${level_id}/minigames/tempfile"/>
+    </target>
+
+    <target name="package_all_minigames" depends="export_all_minigames_assets">
+        <delete>
+            <fileset dir="${basedir}/resources/levels/${level_id}/minigames" includes="*.swf"/>
+        </delete>
+    </target>
+
+    <target name="export_all_minigames_assets" depends="compile_all_minigames">
+        <delete dir="${basedir}/resources/levels/${level_id}/minigames/sd"/>
+        <delete dir="${basedir}/resources/levels/${level_id}/minigames/hd"/>
+        <delete file="${FLUMP_HOME}/exporter.log"/>
+        <exec executable="cmd">
+            <arg line="/c Flump --export '${basedir}/resources/levels/${level_id}/minigames/project.flump' --unmodified 'true'"/>
+        </exec>
+        <waitfor>
+            <available file="${FLUMP_HOME}/exporter.log"/>
+        </waitfor>
+        <antcall target="print_flump_log"/>
+        <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
+            <path>
+                <fileset dir="${basedir}/resources/levels/${level_id}/minigames/sd">
+                    <include name="*.zip"/>
+                </fileset>
+            </path>
+            <param name="zip_path" value="${basedir}/resources/levels/${level_id}/minigames/sd"/>
+        </foreach>
+        <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
+            <path>
+                <fileset dir="${basedir}/resources/levels/${level_id}/minigames/hd">
+                    <include name="*.zip"/>
+                </fileset>
+            </path>
+            <param name="zip_path" value="${basedir}/resources/levels/${level_id}/minigames/hd"/>
+        </foreach>
+        <copy todir="${out}/levels-sd/${level_id}/minigames">
+            <mapper type="glob" from="*.zip" to="*.zip"/>
+            <fileset dir="${basedir}/resources/levels/${level_id}/minigames/sd">
+                <include name="*.zip"/>
+            </fileset>
+        </copy>
+        <copy todir="${out}/levels-hd/${level_id}/minigames">
+            <mapper type="glob" from="*.zip" to="*.zip"/>
+            <fileset dir="${basedir}/resources/levels/${level_id}/minigames/hd">
+                <include name="*.zip"/>
+            </fileset>
+        </copy>
+        <delete dir="${basedir}/resources/levels/${level_id}/minigames/sd"/>
+        <delete dir="${basedir}/resources/levels/${level_id}/minigames/hd"/>
+    </target>
+
+    <target name="resolve-resources" depends="generate-definitions">
+        <delete dir="${out}/assets"/>
+        <copy todir="${out}/assets">
+            <fileset dir="${basedir}/resources/assets/appodeal"/>
+        </copy>
+        <copy todir="${out}/assets/preloader">
+            <fileset dir="${basedir}/resources/assets/preloader"/>
+        </copy>
+        <copy todir="${out}/assets/icons">
+            <fileset dir="${basedir}/resources/assets/icons"/>
+        </copy>
+        <copy todir="${out}/locale">
+            <fileset dir="${basedir}/resources/locale">
+                <include name="**/*.csv"/>
+            </fileset>
+        </copy>
+        <copy todir="${out}/levels-sd" file="${basedir}/resources/levels/data.json"/>
+        <copy todir="${out}/levels-hd" file="${basedir}/resources/levels/data.json"/>
+        <copy todir="${out}/config">
+            <fileset dir="${basedir}/resources/config"/>
+        </copy>
+    </target>
+
+    <target name="generate-texts">
+        <exec executable="cmd">
+            <arg line="/c ${user.home}/.m2/repository/xls/xls2csv/${xls2csv-version}/xls2csv-${xls2csv-version}.exe '${basedir}/resources/locale/Texts.xls'"/>
+        </exec>
+        <java jar="${user.home}/.m2/repository/com/crazyfm/tools/localeGen/${localeGen-version}/localeGen-${localeGen-version}.jar" fork="true">
+            <arg value="${basedir}/resources/locale"/>
+            <arg value="${basedir}/src-gen/locale"/>
+            <arg value="locale"/>
+        </java>
+    </target>
+
+    <target name="generate-definitions" depends="generate-texts">
+        <java jar="${user.home}/.m2/repository/com/crazyfm/tools/definGen/${definGen-version}/definGen-${definGen-version}.jar" fork="true">
+            <arg value="${src-gen}/locale,${src}${minigames_path}"/>
+            <arg value="${src-gen}"/>
+        </java>
+    </target>
+
+    <!--additional-->
+
+    <target name="export_level_json_only">
+        <antcall target="export_level_json_bgs">
+            <param name="level_id" value="level_0"/>
+            <param name="export_bgs" value="false"/>
+        </antcall>
+    </target>
+
+    <!--additional-->
+
+    <target name="swf-release" depends="prepare">
+        <antcall target="build_dep_paths">
+            <param name="pom" value="./build/ant/pom-release.xml"/>
+        </antcall>
+        <property file="${deploy.dir}/dependencies.properties"/>
+        <antcall target="$build-swf">
+            <param name="debug" value="false"/>
+            <param name="native" value="false"/>
+            <param name="adds" value="false"/>
+        </antcall>
+    </target>
+
+    <target name="swf-debug" depends="prepare">
+        <antcall target="build_dep_paths">
+            <param name="pom" value="./build/ant/pom-debug.xml"/>
+        </antcall>
+        <property file="${deploy.dir}/dependencies.properties"/>
+        <antcall target="$build-swf">
+            <param name="debug" value="true"/>
+            <param name="native" value="false"/>
+            <param name="adds" value="false"/>
+        </antcall>
+    </target>
+
+    <target name="swf-release-native" depends="prepare">
+        <antcall target="build_dep_paths">
+            <param name="pom" value="./build/ant/pom-release.xml"/>
+        </antcall>
+        <property file="${deploy.dir}/dependencies.properties"/>
+        <antcall target="$build-swf">
+            <param name="debug" value="false"/>
+            <param name="native" value="true"/>
+            <param name="adds" value="false"/>
+        </antcall>
+    </target>
+
+    <target name="swf-debug-native" depends="prepare">
+        <antcall target="build_dep_paths">
+            <param name="pom" value="./build/ant/pom-debug.xml"/>
+        </antcall>
+        <property file="${deploy.dir}/dependencies.properties"/>
+        <antcall target="$build-swf">
+            <param name="debug" value="true"/>
+            <param name="native" value="true"/>
+            <param name="adds" value="false"/>
+        </antcall>
+    </target>
+
+    <target name="swf-release-mobile" depends="prepare">
+        <antcall target="build_dep_paths">
+            <param name="pom" value="./build/ant/pom-release.xml"/>
+        </antcall>
+        <property file="${deploy.dir}/dependencies.properties"/>
+        <antcall target="$build-swf">
+            <param name="debug" value="false"/>
+            <param name="native" value="true"/>
+            <param name="adds" value="true"/>
+        </antcall>
+    </target>
+
+    <target name="swf-debug-mobile" depends="prepare">
+        <antcall target="build_dep_paths">
+            <param name="pom" value="./build/ant/pom-debug.xml"/>
+        </antcall>
+        <property file="${deploy.dir}/dependencies.properties"/>
+        <antcall target="$build-swf">
+            <param name="debug" value="true"/>
+            <param name="native" value="true"/>
+            <param name="adds" value="true"/>
+        </antcall>
+    </target>
+
+    <target name="$build-swf" depends="resolve-resources">
+        <mkdir dir="${swf}"/>
+        <java jar="${FLEX_HOME}/lib/mxmlc.jar" dir="${FLEX_HOME}/frameworks" fork="true" failonerror="true">
+            <arg value="${src}/StartUp.as"/>
+            <arg value="-source-path+=${src},${src-gen}"/>
+            <arg value="-swf-version=${swf-version}"/>
+            <arg value="-target-player=${target-player}"/>
+            <arg value="-library-path+=${dependencies}"/>
+            <arg value="-output=${swf}/${swf_name}.swf"/>
+            <arg value="-frame=two,${main_class}"/>
+            <arg value="-keep-as3-metadata+=Autowired,PostConstruct"/>
+            <arg value="-compiler.advanced-telemetry=${debug}"/>
+            <arg value="-debug=${debug}"/>
+            <!--<arg value="-managers=flash.fonts.JREFontManager"/>-->
+            <!--<arg value="-managers=flash.fonts.AFEFontManager"/>-->
+            <!--<arg value="-managers=flash.fonts.BatikFontManager"/>-->
+            <!--Conditions-->
+            <arg value="-define+=CONFIG::isNative,${native}"/>
+            <arg value="-define+=CONFIG::debug,${debug}"/>
+            <arg value="-define+=CONFIG::adds,${adds}"/>
+        </java>
+    </target>
+
+    <target name="exe-desktop" depends="swf-release-native">
+        <antcall target="$package-desktop">
+            <param name="output-filename" value="${swf_name}-desktop-hd.exe"/>
+            <param name="descriptor" value="app-desktop-template"/>
+        </antcall>
+    </target>
+    <target name="run-desktop">
+        <property name="descriptor" value="app-desktop-template"/>
+        <antcall target="$generate-descriptor">
+            <param name="descriptor" value="${descriptor}"/>
+        </antcall>
+        <exec executable="${FLEX_HOME}/bin/adl.exe" dir="${basedir}/out" failonerror="true">
+            <arg value="${basedir}/build/manifest/${descriptor}_temp.xml"/>
+            <arg value="${basedir}/out"/>
+        </exec>
+        <delete file="${descriptor_gen}"/>
+    </target>
+
+    <target name="apk-captive-sd" depends="swf-release-mobile">
+        <antcall target="$package-android">
+        <param name="output-filename" value="${swf_name}-captive-runtime-sd.apk"/>
+        <param name="descriptor" value="app-mobile-template"/>
+        <param name="graphics_type" value="sd"/>
+        <param name="air-target" value="apk-captive-runtime"/>
+        </antcall>
+    </target>
+
+    <target name="apk-captive-hd" depends="swf-release-mobile">
+        <antcall target="$package-android">
+            <param name="output-filename" value="${swf_name}-captive-runtime-hd.apk"/>
+            <param name="descriptor" value="app-mobile-template"/>
+            <param name="graphics_type" value="hd"/>
+            <param name="air-target" value="apk-captive-runtime"/>
+        </antcall>
+    </target>
+
+    <target name="apk-debug-sd" depends="swf-debug-mobile">
+        <antcall target="$package-android-debug">
+            <param name="output-filename" value="${swf_name}-debug-sd.apk"/>
+            <param name="descriptor" value="app-mobile-template"/>
+            <param name="graphics_type" value="sd"/>
+            <param name="air-target" value="apk-debug"/>
+        </antcall>
+    </target>
+
+    <target name="apk-debug-hd" depends="swf-debug-mobile">
+        <antcall target="$package-android-debug">
+            <param name="output-filename" value="${swf_name}-debug-hd.apk"/>
+            <param name="descriptor" value="app-mobile-template"/>
+            <param name="graphics_type" value="hd"/>
+            <param name="air-target" value="apk-debug"/>
+        </antcall>
+    </target>
+
+    <target name="ipa-ad-hoc" depends="swf-release-mobile">
+        <antcall target="$package-ios">
+            <param name="output-filename" value="${swf_name}-ipa-ad-hoc-hd.ipa"/>
+            <param name="descriptor" value="app-mobile-template"/>
+            <param name="graphics_type" value="hd"/>
+            <param name="air-target" value="ipa-ad-hoc"/>
+        </antcall>
+    </target>
+
+    <target name="$package-android" depends="$generate-descriptor">
+        <mkdir dir="${dist}"/>
+        <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
+            <arg value="-package" />
+            <arg value="-target" />
+            <arg value="${air-target}" />
+            <arg value="-storetype" />
+            <arg value="jks" />
+            <arg value="-keystore" />
+            <arg value="${android_cert}" />
+            <arg value="-storepass" />
+            <arg value="${android_cert_pass}" />
+            <arg value="${dist}/${output-filename}"/>
+            <arg value="${descriptor_gen}" />
+            <arg value="-extdir"/>
+            <arg value="${ane_path}" />
+            <arg value="${swf}/${swf_name}.swf" />
+            <arg value="${out}/assets"/>
+            <arg value="${out}/levels-${graphics_type}"/>
+            <arg value="${out}/lobby-${graphics_type}"/>
+            <arg value="${out}/locale"/>
+        </exec>
+        <delete file="${descriptor_gen}"/>
+    </target>
+    <target name="$package-android-debug" depends="$generate-descriptor">
+        <mkdir dir="${dist}"/>
+        <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
+            <arg value="-package" />
+            <arg value="-target" />
+            <arg value="${air-target}" />
+            <arg value="-connect"/>
+            <arg value="${debug_ip}"/>
+            <arg value="-storetype" />
+            <arg value="jks" />
+            <arg value="-keystore" />
+            <arg value="${android_cert}" />
+            <arg value="-storepass" />
+            <arg value="${android_cert_pass}" />
+            <arg value="${dist}/${output-filename}"/>
+            <arg value="${descriptor_gen}" />
+            <arg value="-extdir"/>
+            <arg value="${ane_path}" />
+            <arg value="${swf}/${swf_name}.swf" />
+            <arg value="${out}/assets"/>
+            <arg value="${out}/levels-${graphics_type}"/>
+            <arg value="${out}/lobby-${graphics_type}"/>
+            <arg value="${out}/locale"/>
+        </exec>
+        <delete file="${descriptor_gen}"/>
+    </target>
+    <target name="$package-ios" depends="$generate-descriptor">
+        <mkdir dir="${dist}"/>
+        <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
+            <arg value="-package" />
+            <arg value="-target" />
+            <arg value="${air-target}" />
+            <arg value="-provisioning-profile" />
+            <arg value="${ios_mobile_provision}" />
+            <arg value="-storetype" />
+            <arg value="pkcs12" />
+            <arg value="-keystore" />
+            <arg value="${ios_cert}" />
+            <arg value="-storepass" />
+            <arg value="${ios_cert_pass}" />
+            <arg value="${dist}/${output-filename}"/>
+            <arg value="${descriptor_gen}" />
+            <arg value="-extdir"/>
+            <arg value="${ane_path}" />
+            <arg value="${swf}/${swf_name}.swf" />
+            <arg value="${out}/assets"/>
+            <arg value="${out}/levels-${graphics_type}"/>
+            <arg value="${out}/lobby-${graphics_type}"/>
+            <arg value="${out}/locale"/>
+        </exec>
+        <delete file="${descriptor_gen}"/>
+    </target>
+    <target name="$package-desktop" depends="$generate-descriptor">
+        <mkdir dir="${dist}"/>
+        <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
+            <arg value="-package" />
+            <arg value="-storetype" />
+            <arg value="pkcs12" />
+            <arg value="-keystore" />
+            <arg value="${desktop_cert}" />
+            <arg value="-storepass" />
+            <arg value="${desktop_cert_pass}" />
+            <arg value="-target" />
+            <arg value="native" />
+            <arg value="${dist}/${output-filename}"/>
+            <arg value="${descriptor_gen}" />
+            <arg value="${swf}/${swf_name}.swf" />
+            <arg value="${out}/assets"/>
+            <arg value="${out}/levels-hd"/>
+            <arg value="${out}/lobby-hd"/>
+            <arg value="${out}/locale"/>
+        </exec>
+        <delete file="${descriptor_gen}"/>
+    </target>
+
+    <target name="$generate-descriptor">
+        <property name="descriptor_template" value="${basedir}/build/manifest/${descriptor}.xml"/>
+        <property name="descriptor_gen" value="${basedir}/build/manifest/${descriptor}_temp.xml"/>
+        <delete file="${descriptor_gen}"/>
+        <copy file="${descriptor_template}" tofile="${descriptor_gen}"/>
+        <replace file="${descriptor_gen}" token="@{app_id}" value="${app_id}"/>
+        <replace file="${descriptor_gen}" token="@{version}" value="${ver.num}"/>
+        <replace file="${descriptor_gen}" token="@{content}" value="swf/${swf_name}.swf"/>
+    </target>
+
+    <target name="install-apk-captive-sd">
+        <antcall target="$install-apk-captive">
+            <param name="graphics_type" value="sd"/>
+        </antcall>
+    </target>
+    <target name="install-apk-captive-hd">
+        <antcall target="$install-apk-captive">
+            <param name="graphics_type" value="hd"/>
+        </antcall>
+    </target>
+    <target name="install-apk-debug-sd">
+        <antcall target="$install-apk-debug">
+            <param name="graphics_type" value="sd"/>
+        </antcall>
+    </target>
+    <target name="install-apk-debug-hd">
+        <antcall target="$install-apk-debug">
+            <param name="graphics_type" value="hd"/>
+        </antcall>
+    </target>
+    <target name="$install-apk-captive">
+        <antcall target="$install-apk">
+            <param name="type" value="captive-runtime-${graphics_type}.apk"/>
+        </antcall>
+    </target>
+    <target name="$install-apk-debug">
+        <antcall target="$install-apk">
+            <param name="type" value="debug-${graphics_type}.apk"/>
+        </antcall>
+    </target>
+    <target name="$install-apk">
+        <antcall target="$install-mobile">
+            <param name="platform" value="android"/>
+        </antcall>
+    </target>
+    <target name="$install-mobile" depends="$uninstall-mobile">
+        <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
+            <arg value="-installApp" />
+            <arg value="-platform" />
+            <arg value="${platform}" />
+            <arg value="-package" />
+            <arg value="${dist}/${swf_name}-${type}" />
+        </exec>
+    </target>
+    <target name="$uninstall-mobile">
+        <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="false">
+            <arg value="-uninstallApp" />
+            <arg value="-platform" />
+            <arg value="${platform}" />
+            <arg value="-appid" />
+            <arg value="${app_id}" />
+        </exec>
+    </target>
+
+    <target name="clean" depends="kill-adb">
+        <delete dir="${out}"/>
+        <delete dir="${dist}"/>
+        <delete dir="${basedir}/src-gen"/>
+    </target>
+    <target name="kill-adb" >
+        <exec executable="${FLEX_HOME}/lib/android/bin/adb.exe">
+            <arg value="kill-server" />
+        </exec>
+    </target>
+    <target name="check-ane">
+        <available file="${ane_path}/appodeal-${appodeal-version}.ane" property="ane.present"/>
+    </target>
+    <target name="prepare-ane" depends="check-ane" unless="ane.present">
+        <copy file="${ane_path}/appodeal/${appodeal-version}/appodeal-${appodeal-version}.ane" todir="${ane_path}"/>
+        <copy file="${ane_path}/appodeal-play-services/${appodeal-play-services-version}/appodeal-play-services-${appodeal-play-services-version}.ane" todir="${ane_path}"/>
+        <copy file="${ane_path}/appodeal-support-lib/${appodeal-support-lib-version}/appodeal-support-lib-${appodeal-support-lib-version}.ane" todir="${ane_path}"/>
+    </target>
+
+    <target name="increase_minor_version">
+        <propertyfile file="build/ant/version.properties">
+            <entry key="build.minor.number" type="int" operation="+" value="1" pattern="0" />
+        </propertyfile>
+    </target>
+    <target name="increase_major_version">
+        <propertyfile file="build/ant/version.properties">
+            <entry key="build.major.number" type="int" operation="+" value="1" pattern="0" />
+            <entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />
+        </propertyfile>
+    </target>
+    <target name="increase_release_version">
+        <propertyfile file="build/ant/version.properties">
+            <entry key="build.release.number" type="int" operation="+" value="1" pattern="0" />
+            <entry key="build.major.number" type="int" operation="=" value="0" pattern="0" />
+            <entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />
+        </propertyfile>
+    </target>
+</project>
