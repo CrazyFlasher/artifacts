@@ -26,6 +26,7 @@
     <property name="out" value="${basedir}/out"/>
     <property name="dist" value="${basedir}/dist"/>
     <property name="swf" value="${out}/swf"/>
+    <property name="ane_path" value="${user.home}/.m2/ane/"/>
 
     <!--<property name="internal_libs_path" value="${basedir}/dependencies"/>-->
     <property name="ver.num" value="${build.release.number}.${build.major.number}.${build.minor.number}"/>
@@ -558,8 +559,7 @@
         </antcall>
     </target>
 
-    <target name="$package-android" depends="$generate-descriptor">
-        <mkdir dir="${dist}"/>
+    <target name="$package-android" depends="prepare-ane,$generate-descriptor">
         <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
             <arg value="-package" />
             <arg value="-target" />
@@ -582,8 +582,7 @@
         </exec>
         <delete file="${descriptor_gen}"/>
     </target>
-    <target name="$package-android-debug" depends="$generate-descriptor">
-        <mkdir dir="${dist}"/>
+    <target name="$package-android-debug" depends="prepare-ane,$generate-descriptor">
         <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
             <arg value="-package" />
             <arg value="-target" />
@@ -608,8 +607,7 @@
         </exec>
         <delete file="${descriptor_gen}"/>
     </target>
-    <target name="$package-ios" depends="$generate-descriptor">
-        <mkdir dir="${dist}"/>
+    <target name="$package-ios" depends="prepare-ane,$generate-descriptor">
         <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
             <arg value="-package" />
             <arg value="-target" />
@@ -635,7 +633,6 @@
         <delete file="${descriptor_gen}"/>
     </target>
     <target name="$package-desktop" depends="$generate-descriptor">
-        <mkdir dir="${dist}"/>
         <exec executable="${FLEX_HOME}/bin/adt.bat" dir="${basedir}/out" failonerror="true">
             <arg value="-package" />
             <arg value="-storetype" />
@@ -708,7 +705,7 @@
             <arg value="-platform" />
             <arg value="${platform}" />
             <arg value="-package" />
-            <arg value="${dist}/${swf_name}-${type}" />
+            <arg value="${out}/${swf_name}-${type}" />
         </exec>
     </target>
     <target name="$uninstall-mobile">
@@ -731,13 +728,14 @@
             <arg value="kill-server" />
         </exec>
     </target>
-    <target name="check-ane">
-        <available file="${ane_path}/appodeal-${appodeal-version}.ane" property="ane.present"/>
-    </target>
-    <target name="prepare-ane" depends="check-ane" unless="ane.present">
-        <copy file="${ane_path}/appodeal/${appodeal-version}/appodeal-${appodeal-version}.ane" todir="${ane_path}"/>
-        <copy file="${ane_path}/appodeal-play-services/${appodeal-play-services-version}/appodeal-play-services-${appodeal-play-services-version}.ane" todir="${ane_path}"/>
-        <copy file="${ane_path}/appodeal-support-lib/${appodeal-support-lib-version}/appodeal-support-lib-${appodeal-support-lib-version}.ane" todir="${ane_path}"/>
+    <target name="prepare-ane">
+        <mkdir dir="${ane_path}"/>
+        <copy todir="${ane_path}">
+            <flattenmapper/>
+            <fileset dir="${user.home}/.m2/repository/">
+                <include name="**/*.ane"/>
+            </fileset>
+        </copy>
     </target>
 
     <target name="increase_minor_version">
