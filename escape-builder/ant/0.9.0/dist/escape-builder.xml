@@ -1,6 +1,15 @@
 <?xml version="1.0"?>
-<project name="game" basedir="../../../" default="package">
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+<project name="game" basedir="../../../" default="package" xmlns:artifact="urn:maven-artifact-ant">
+    <property name="target-player" value="22.0"/>
+    <property name="swf-version" value="33"/>
+    <property name="pngcrush-version" value="1.8.6"/>
+    <property name="xls2csv-version" value="1.0.0"/>
+    <property name="tagen-version" value="1.0.0"/>
+    <property name="localeGen-version" value="0.1.0"/>
+    <property name="definGen-version" value="0.1.0"/>
+    <property name="appodeal-version" value="1.0.0"/>
+    <property name="appodeal-play-services-version" value="8.1.0"/>
+    <property name="appodeal-support-lib-version" value="23.1.2"/>
 
     <property environment="env."/>
     <property name="FLEX_HOME" location="${env.FLEX_HOME}"/>
@@ -13,7 +22,6 @@
     <dirname property="imported.basedir" file="${ant.file.game}/../"/>
     <property file="${imported.basedir}/ant/build.properties"/>
     <property file="${basedir}/build/ant/build.properties"/>
-    <property file="${basedir}/build/ant/version.properties"/>
     <property file="${basedir}/build/ant/local.properties"/>
 
     <import file="${user.home}/.m2/repository/com/domwires/builder/0.9.0/builder-0.9.0.xml" optional="true"/>
@@ -29,9 +37,20 @@
     <property name="ane_path" value="${user.home}/.m2/ane/"/>
 
     <!--<property name="internal_libs_path" value="${basedir}/dependencies"/>-->
-    <property name="ver.num" value="${build.release.number}.${build.major.number}.${build.minor.number}"/>
-    <property name="swf_name" value="${ant.project.name}-${ver.num}"/>
+    <property name="swf_name" value="${ant.project.name}"/>
     <property name="main_class" value="PreInit"/>
+
+    <target name="prepare" depends="-init-ooo">
+        <delete dir="${deploy.dir}"/>
+        <mavendep pom="./build/ant/pom-release.xml"/>
+        <mavendep pom="./build/ant/pom-debug.xml"/>
+
+        <artifact:pom id="pom-release" file="./build/ant/pom-release.xml" />
+        <artifact:pom id="pom-debug" file="./build/ant/pom-debug.xml" />
+
+        <echo>Release version is ${pom-release.version}</echo>
+        <echo>Debug version is ${pom-debug.version}</echo>
+    </target>
 
     <target name="package" depends="
         clean,
@@ -40,10 +59,8 @@
         apk-captive-hd,
         apk-captive-sd,
         ipa-ad-hoc,
-        exe-desktop,
-        increase_minor_version"
+        exe-desktop"
     />
-
     <target name="package-resources" depends="export_lobby_assets,compress_lobby_assets,package_all_levels,package_all_minigames"/>
     <!--level-->
 
@@ -300,7 +317,7 @@
         <delete file="${basedir}/resources/levels/${level_id}/minigames/tempfile"/>
     </target>
 
-    <target name="package_all_minigames" depends="export_all_minigames_assets">
+    <target name="package_all_minigames" depends="export_all_minigames_assets,compress_all_minigames">
         <delete>
             <fileset dir="${basedir}/resources/levels/${level_id}/minigames" includes="*.swf"/>
         </delete>
@@ -317,22 +334,6 @@
             <available file="${FLUMP_HOME}/exporter.log"/>
         </waitfor>
         <antcall target="print_flump_log"/>
-        <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
-            <path>
-                <fileset dir="${basedir}/resources/levels/${level_id}/minigames/sd">
-                    <include name="*.zip"/>
-                </fileset>
-            </path>
-            <param name="zip_path" value="${basedir}/resources/levels/${level_id}/minigames/sd"/>
-        </foreach>
-        <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
-            <path>
-                <fileset dir="${basedir}/resources/levels/${level_id}/minigames/hd">
-                    <include name="*.zip"/>
-                </fileset>
-            </path>
-            <param name="zip_path" value="${basedir}/resources/levels/${level_id}/minigames/hd"/>
-        </foreach>
         <copy todir="${out}/levels-sd/${level_id}/minigames">
             <mapper type="glob" from="*.zip" to="*.zip"/>
             <fileset dir="${basedir}/resources/levels/${level_id}/minigames/sd">
@@ -347,6 +348,25 @@
         </copy>
         <delete dir="${basedir}/resources/levels/${level_id}/minigames/sd"/>
         <delete dir="${basedir}/resources/levels/${level_id}/minigames/hd"/>
+    </target>
+    <target name="compress_all_minigames" depends="-init-contrib">
+        <taskdef resource="net/sf/antcontrib/antlib.xml" classpathref="ant-contrib.classpath"/>
+        <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
+            <path>
+                <fileset dir="${out}/levels-sd/${level_id}/minigames">
+                    <include name="*.zip"/>
+                </fileset>
+            </path>
+            <param name="zip_path" value="${out}/levels-sd/${level_id}/minigames"/>
+        </foreach>
+        <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
+            <path>
+                <fileset dir="${out}/levels-hd/${level_id}/minigames">
+                    <include name="*.zip"/>
+                </fileset>
+            </path>
+            <param name="zip_path" value="${out}/levels-hd/${level_id}/minigames"/>
+        </foreach>
     </target>
 
     <target name="resolve-resources" depends="generate-definitions">
@@ -660,7 +680,7 @@
         <delete file="${descriptor_gen}"/>
         <copy file="${descriptor_template}" tofile="${descriptor_gen}"/>
         <replace file="${descriptor_gen}" token="@{app_id}" value="${app_id}"/>
-        <replace file="${descriptor_gen}" token="@{version}" value="${ver.num}"/>
+        <replace file="${descriptor_gen}" token="@{version}" value="${pom-release.version}"/>
         <replace file="${descriptor_gen}" token="@{content}" value="swf/${swf_name}.swf"/>
     </target>
 
@@ -736,24 +756,5 @@
                 <include name="**/*.ane"/>
             </fileset>
         </copy>
-    </target>
-
-    <target name="increase_minor_version">
-        <propertyfile file="build/ant/version.properties">
-            <entry key="build.minor.number" type="int" operation="+" value="1" pattern="0" />
-        </propertyfile>
-    </target>
-    <target name="increase_major_version">
-        <propertyfile file="build/ant/version.properties">
-            <entry key="build.major.number" type="int" operation="+" value="1" pattern="0" />
-            <entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />
-        </propertyfile>
-    </target>
-    <target name="increase_release_version">
-        <propertyfile file="build/ant/version.properties">
-            <entry key="build.release.number" type="int" operation="+" value="1" pattern="0" />
-            <entry key="build.major.number" type="int" operation="=" value="0" pattern="0" />
-            <entry key="build.minor.number" type="int" operation="=" value="0" pattern="0" />
-        </propertyfile>
     </target>
 </project>
