@@ -41,7 +41,7 @@
     <property name="main_class" value="PreInit"/>
 
     <target name="prepare" depends="-init-ooo">
-        <delete dir="${deploy.dir}"/>
+        <!--<delete dir="${deploy.dir}"/>-->
         <mavendep pom="./build/ant/pom-release.xml"/>
         <mavendep pom="./build/ant/pom-debug.xml"/>
 
