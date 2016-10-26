@@ -349,8 +349,7 @@
         <delete dir="${basedir}/resources/levels/${level_id}/minigames/sd"/>
         <delete dir="${basedir}/resources/levels/${level_id}/minigames/hd"/>
     </target>
-    <target name="compress_all_minigames" depends="-init-contrib">
-        <taskdef resource="net/sf/antcontrib/antlib.xml" classpathref="ant-contrib.classpath"/>
+    <target name="compress_all_minigames">
         <foreach target="$compress_pngs_in_minigame_zip" param="zip_path_name">
             <path>
                 <fileset dir="${out}/levels-sd/${level_id}/minigames">
@@ -599,6 +598,7 @@
             <arg value="${out}/levels-${graphics_type}"/>
             <arg value="${out}/lobby-${graphics_type}"/>
             <arg value="${out}/locale"/>
+            <arg value="${out}/config"/>
         </exec>
         <delete file="${descriptor_gen}"/>
     </target>
@@ -624,6 +624,7 @@
             <arg value="${out}/levels-${graphics_type}"/>
             <arg value="${out}/lobby-${graphics_type}"/>
             <arg value="${out}/locale"/>
+            <arg value="${out}/config"/>
         </exec>
         <delete file="${descriptor_gen}"/>
     </target>
@@ -649,6 +650,7 @@
             <arg value="${out}/levels-${graphics_type}"/>
             <arg value="${out}/lobby-${graphics_type}"/>
             <arg value="${out}/locale"/>
+            <arg value="${out}/config"/>
         </exec>
         <delete file="${descriptor_gen}"/>
     </target>
@@ -670,6 +672,7 @@
             <arg value="${out}/levels-hd"/>
             <arg value="${out}/lobby-hd"/>
             <arg value="${out}/locale"/>
+            <arg value="${out}/config"/>
         </exec>
         <delete file="${descriptor_gen}"/>
     </target>
@@ -725,7 +728,7 @@
             <arg value="-platform" />
             <arg value="${platform}" />
             <arg value="-package" />
-            <arg value="${out}/${swf_name}-${type}" />
+            <arg value="${dist}/${swf_name}-${type}" />
         </exec>
     </target>
     <target name="$uninstall-mobile">
