@@ -674,7 +674,7 @@
         <delete file="${descriptor_gen}"/>
     </target>
 
-    <target name="$generate-descriptor">
+    <target name="$generate-descriptor" depends="prepare">
         <property name="descriptor_template" value="${basedir}/build/manifest/${descriptor}.xml"/>
         <property name="descriptor_gen" value="${basedir}/build/manifest/${descriptor}_temp.xml"/>
         <delete file="${descriptor_gen}"/>
