@@ -159,7 +159,7 @@
     <target name="$check-tagen">
         <available file="${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}/ta-gen.swf" property="tagen.present"/>
     </target>
-    <target name="$prepare-tagen" depends="check-flexunit" unless="tagen.present">
+    <target name="$prepare-tagen" depends="$check-tagen" unless="tagen.present">
         <unzip
                 src="${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}/ta-gen-${tagen-version}.zip"
                 dest="${user.home}/.m2/repository/neolit123/ta-gen/${tagen-version}"
