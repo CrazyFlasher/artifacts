@@ -29,7 +29,8 @@
             optional="true"/>
 
     <property name="jsfl" value="${user.home}/.m2/repository/com/crazyflasher/escape/escape-builder/${builder-version}/escape-builder-${builder-version}.jsfl"/>
-    <property name="jsfl_temp" value="${imported.basedir}/jsfl/build_temp.jsfl"/>
+    <property name="jsfl_temp"
+              value="${user.home}/.m2/repository/com/crazyflasher/escape/escape-builder/${builder-version}/escape-builder-${builder-version}_temp.jsfl"/>
 
     <property name="src" value="${basedir}/src"/>
     <property name="src-gen" value="${basedir}/src-gen"/>
@@ -74,9 +75,8 @@
         <antcall target="generate_levels_data"/>
     </target>
 
-    <target name="package_level"
-            depends="copy_common_ingameUI,export_level_assets,compress_level_assets,export_level_json_bgs,compress_info_atlas,resolve-level-images">
-        <antcall target="compile_level">
+    <target name="package_level" depends="export_level_assets,compress_level_assets,export_level_json_bgs,compress_info_atlas,resolve-level-images">
+        <antcall target="$compile_level">
             <param name="export_bgs" value="false"/>
         </antcall>
         <delete file="${basedir}/resources/levels/${level_id}/level/${level_id}.swf"/>
@@ -96,7 +96,7 @@
         <!--TODO: generate data.json automatically-->
     </target>
 
-    <target name="compile_level">
+    <target name="$compile_level">
         <delete file="${jsfl_temp}"/>
         <delete file="${basedir}/resources/levels/${level_id}/level/tempfile"/>
         <copy file="${jsfl}" tofile="${jsfl_temp}"/>
@@ -117,8 +117,9 @@
     </target>
 
     <target name="export_level_json_bgs">
-        <antcall target="compile_level">
-            <param name="export_bgs" value="true"/>
+        <property name="export_bgs" value="true"/>
+        <antcall target="$compile_level">
+            <param name="export_bgs" value="${export_bgs}"/>
         </antcall>
         <exec executable="cmd">
             <arg
@@ -180,8 +181,8 @@
         </exec>
     </target>
 
-    <target name="export_level_assets">
-        <antcall target="compile_level">
+    <target name="export_level_assets" depends="copy_common_ingameUI">
+        <antcall target="$compile_level">
             <param name="export_bgs" value="false"/>
         </antcall>
         <delete dir="${basedir}/resources/levels/${level_id}/level/sd"/>
