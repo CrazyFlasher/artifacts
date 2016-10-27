@@ -74,7 +74,8 @@
         <antcall target="generate_levels_data"/>
     </target>
 
-    <target name="package_level" depends="export_level_assets,compress_level_assets,export_level_json_bgs,compress_info_atlas,resolve-level-images">
+    <target name="package_level"
+            depends="copy_common_ingameUI,export_level_assets,compress_level_assets,export_level_json_bgs,compress_info_atlas,resolve-level-images">
         <antcall target="compile_level">
             <param name="export_bgs" value="false"/>
         </antcall>
@@ -179,7 +180,7 @@
         </exec>
     </target>
 
-    <target name="export_level_assets" depends="copy_common_ingameUI">
+    <target name="export_level_assets">
         <antcall target="compile_level">
             <param name="export_bgs" value="false"/>
         </antcall>
