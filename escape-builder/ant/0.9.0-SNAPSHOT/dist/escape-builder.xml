@@ -106,6 +106,7 @@
         <replace file="${jsfl_temp}" token="\" value="/"/>
         <exec executable="${FLASH_IDE_EXE}">
             <arg line="${jsfl_temp}"/>
+            <arg line="‑AlwaysRunJSFL"/>
         </exec>
         <waitfor>
             <available file="${basedir}/resources/levels/${level_id}/level/tempfile"/>
