@@ -1,8 +1,8 @@
 <?xml version="1.0" standalone="yes"?>
-<project name="overrideAir" default="maven-deploy" basedir=".">
+<project name="overrideAir" default="maven-deploy" basedir="">
 
     <property name="ooo-build.vers" value="2.10"/>
-    <ant antfile="../../etc/bootstrap.xml"/>
+    <ant antfile="../../../etc/bootstrap.xml"/>
     <import file="${user.home}/.m2/ooo-build/${ooo-build.vers}/ooo-build.xml"/>
 
     <property name="deploy.dir" value="dist"/>
