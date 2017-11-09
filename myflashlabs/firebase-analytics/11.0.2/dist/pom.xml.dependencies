@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-dependencies" default="init-dependencies">
+<target name="init-dependencies">
+    <echo level="info" message="Loading dependency paths from file: C:\Users\CrazyFlasher\Documents\work\projects\artifacts\myflashlabs\firebase-analytics\11.0.2\dist\pom.xml.dependencies"/>
+    <path id="pom.xml.path"/>
+    <fileset id="pom.xml.fileset" dir="C:\Users\CrazyFlasher\.m2\repository"/>
+  </target>
+</project>
