@@ -4,7 +4,7 @@
   <groupId>com.myflashlabs</groupId>
   <artifactId>inAppPayments</artifactId>
   <packaging>ane</packaging>
-  <version>2.2.2</version>
+  <version>2.2.0</version>
   <repositories>
     <repository>
       <id>CrazyFlasher</id>
