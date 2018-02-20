@@ -5,10 +5,4 @@
   <artifactId>distriqt-expansion</artifactId>
   <packaging>ane</packaging>
   <version>1.0.0</version>
-  <repositories>
-    <repository>
-      <id>CrazyFlasher</id>
-      <url>https://raw.github.com/CrazyFlasher/maven-repo/master</url>
-    </repository>
-  </repositories>
 </project>
